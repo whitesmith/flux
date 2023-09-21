@@ -40,12 +40,7 @@ export function APIKeyModal({
         <Column mainAxisAlignment="center" crossAxisAlignment="center" height="500px">
           <APIKeyInput apiKey={apiKey} setApiKey={setApiKeyTracked} />
           <Text mt={5} width="80%" textAlign="center" fontSize="md">
-            We will <u>never</u> upload, log, or store your API key outside of your
-            browser's local storage. Verify for yourself{" "}
-            <Link href="https://github.com/transmissions11/flux" color="green" isExternal>
-              here
-            </Link>
-            .
+            API key is stored in the Browser with LocalStorage.
           </Text>
         </Column>
       </ModalContent>

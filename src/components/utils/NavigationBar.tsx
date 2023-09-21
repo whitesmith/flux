@@ -76,39 +76,8 @@ export function NavigationBar({
         width="auto"
       >
         <Text whiteSpace="nowrap">
-          <b>Flux</b> by
+          <b>Flux</b> Whitesmith
         </Text>
-
-        <AvatarGroup ml="4px" size="sm">
-          <Avatar
-            bg="#ADADAD"
-            color="transparent"
-            name="Transmissions11"
-            src={t11s}
-            as={Link}
-            isExternal
-            href="https://twitter.com/transmissions11"
-          />
-          <Avatar
-            bg="#6B2E80"
-            color="transparent"
-            name="Dave White"
-            src={dave}
-            as={Link}
-            isExternal
-            href="https://twitter.com/_Dave__White_"
-          />
-          <Avatar
-            bg="white"
-            color="transparent"
-            name="Paradigm"
-            src={paradigm}
-            as={Link}
-            isExternal
-            href="https://twitter.com/paradigm"
-          />
-        </AvatarGroup>
-
         <Box mx="20px" height="100%" width="1px" bg="#EEEEEE" />
 
         <Menu>
@@ -126,6 +95,7 @@ export function NavigationBar({
               <MenuItem
                 command={`⇧${modifierKeyText}P`}
                 onClick={newUserNodeLinkedToANewSystemNode}
+                px="16px"
               >
                 New conversation tree
               </MenuItem>
@@ -137,6 +107,7 @@ export function NavigationBar({
               <MenuItem
                 command={`${modifierKeyText}P`}
                 onClick={() => newConnectedToSelectedNode(FluxNodeType.User)}
+                px="16px"
               >
                 New user node
               </MenuItem>
@@ -144,6 +115,7 @@ export function NavigationBar({
               <MenuItem
                 command={`${modifierKeyText}U`}
                 onClick={() => newConnectedToSelectedNode(FluxNodeType.System)}
+                px="16px"
               >
                 New system node
               </MenuItem>
@@ -152,15 +124,15 @@ export function NavigationBar({
             <MenuDivider />
 
             <MenuGroup title="GPT">
-              <MenuItem command={`${modifierKeyText}⏎`} onClick={submitPrompt}>
+              <MenuItem command={`${modifierKeyText}⏎`} onClick={submitPrompt} px="16px">
                 Generate GPT responses
               </MenuItem>
 
-              <MenuItem command={`⇧${modifierKeyText}⏎`} onClick={regenerate}>
+              <MenuItem command={`⇧${modifierKeyText}⏎`} onClick={regenerate} px="16px">
                 Regenerate GPT responses
               </MenuItem>
 
-              <MenuItem command={`${modifierKeyText}K`} onClick={completeNextWords}>
+              <MenuItem command={`${modifierKeyText}K`} onClick={completeNextWords} px="16px">
                 Complete next words
               </MenuItem>
             </MenuGroup>
@@ -179,11 +151,11 @@ export function NavigationBar({
           </MenuButton>
           <MenuList width="300px">
             <MenuGroup title="History">
-              <MenuItem command={`${modifierKeyText}Z`} onClick={undo}>
+              <MenuItem command={`${modifierKeyText}Z`} onClick={undo} px="16px">
                 Undo
               </MenuItem>
 
-              <MenuItem command={`⇧${modifierKeyText}Z`} onClick={redo}>
+              <MenuItem command={`⇧${modifierKeyText}Z`} onClick={redo} px="16px">
                 Redo
               </MenuItem>
             </MenuGroup>
@@ -191,11 +163,11 @@ export function NavigationBar({
             <MenuDivider />
 
             <MenuGroup title="Delete">
-              <MenuItem command={`${modifierKeyText}⌫`} onClick={deleteSelectedNodes}>
+              <MenuItem command={`${modifierKeyText}⌫`} onClick={deleteSelectedNodes} px="16px">
                 Delete selected node(s)
               </MenuItem>
 
-              <MenuItem command={`⇧${modifierKeyText}⌫`} onClick={onClear}>
+              <MenuItem command={`⇧${modifierKeyText}⌫`} onClick={onClear} px="16px">
                 Delete everything
               </MenuItem>
             </MenuGroup>
@@ -203,7 +175,7 @@ export function NavigationBar({
             <MenuDivider />
 
             <MenuGroup title="Rename">
-              <MenuItem command={`${modifierKeyText}E`} onClick={showRenameInput}>
+              <MenuItem command={`${modifierKeyText}E`} onClick={showRenameInput} px="16px">
                 Rename selected node
               </MenuItem>
             </MenuGroup>
@@ -214,6 +186,7 @@ export function NavigationBar({
               <MenuItem
                 command={`⇧${modifierKeyText}C`}
                 onClick={copyMessagesToClipboard}
+                px="16px"
               >
                 Copy messages to clipboard
               </MenuItem>
@@ -233,10 +206,10 @@ export function NavigationBar({
           </MenuButton>
           <MenuList width="300px">
             <MenuGroup title="Parents/Children">
-              <MenuItem command={`${modifierKeyText}↑`} onClick={moveToParent}>
+              <MenuItem command={`${modifierKeyText}↑`} onClick={moveToParent} px="16px">
                 Up to parent node
               </MenuItem>
-              <MenuItem command={`${modifierKeyText}↓`} onClick={moveToChild}>
+              <MenuItem command={`${modifierKeyText}↓`} onClick={moveToChild} px="16px">
                 Down to child node
               </MenuItem>
             </MenuGroup>
@@ -244,10 +217,10 @@ export function NavigationBar({
             <MenuDivider />
 
             <MenuGroup title="Siblings">
-              <MenuItem command={`${modifierKeyText}←`} onClick={moveToLeftSibling}>
+              <MenuItem command={`${modifierKeyText}←`} onClick={moveToLeftSibling} px="16px">
                 Left to sibling node
               </MenuItem>
-              <MenuItem command={`${modifierKeyText}→`} onClick={moveToRightSibling}>
+              <MenuItem command={`${modifierKeyText}→`} onClick={moveToRightSibling} px="16px">
                 Right to sibling node
               </MenuItem>
             </MenuGroup>
@@ -255,7 +228,7 @@ export function NavigationBar({
             <MenuDivider />
 
             <MenuGroup title="Global">
-              <MenuItem command={`${modifierKeyText}.`} onClick={autoZoom}>
+              <MenuItem command={`${modifierKeyText}.`} onClick={autoZoom} px="16px">
                 Zoom out & center
               </MenuItem>
             </MenuGroup>
@@ -269,16 +242,6 @@ export function NavigationBar({
           onClick={onOpenSettingsModal}
         >
           Settings
-        </Button>
-        <Button
-          variant="ghost"
-          height="80%"
-          px="5px"
-          ml="16px"
-          as="a"
-          href="https://twitter.com/transmissions11/status/1640775967856803840"
-        >
-          About
         </Button>
       </Row>
     </Row>
