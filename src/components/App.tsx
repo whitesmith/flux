@@ -65,7 +65,7 @@ import { NavigationBar } from "./utils/NavigationBar";
 import { CheckCircleIcon } from "@chakra-ui/icons";
 import { Box, useDisclosure, Spinner, useToast } from "@chakra-ui/react";
 import mixpanel from "mixpanel-browser";
-import { CreateCompletionResponseChoicesInner, OpenAI } from "openai-streams";
+import { OpenAI } from "openai-streams";
 import { Resizable } from "re-resizable";
 import { useEffect, useState, useCallback, useRef } from "react";
 import { useBeforeunload } from "react-beforeunload";
@@ -370,7 +370,7 @@ function App() {
           temperature: temp,
           messages: messagesFromLineage(parentNodeLineage, settings),
         },
-        { apiKey: apiKey!, mode: "raw" }
+        { apiKey: apiKey!, mode: "raw", apiBase: apiBase }
       );
 
       const DECODER = new TextDecoder();
@@ -553,7 +553,7 @@ function App() {
           max_tokens: 250,
           stop: ["\n\n", "assistant:", "user:"],
         },
-        { apiKey: apiKey!, mode: "raw" }
+        { apiKey: apiKey!, mode: "raw", apiBase: apiBase }
       );
 
       const DECODER = new TextDecoder();
@@ -571,7 +571,7 @@ function App() {
               "No choices in response. Decoded response: " + JSON.stringify(decoded)
             );
 
-          const choice: CreateCompletionResponseChoicesInner = decoded.choices[0];
+          const choice = decoded.choices[0];
 
           setNodes((newerNodes) => {
             try {
@@ -864,6 +864,7 @@ function App() {
   //////////////////////////////////////////////////////////////*/
 
   const [apiKey, setApiKey] = useLocalStorage<string>(API_KEY_LOCAL_STORAGE_KEY);
+  const apiBase = import.meta.env.VITE_OPENAI_API_BASE;
 
   const [availableModels, setAvailableModels] = useState<string[] | null>(null);
 
@@ -879,7 +880,7 @@ function App() {
       (async () => {
         let modelList: string[] = [];
         try {
-          modelList = await getAvailableChatModels(apiKey!);
+          modelList = await getAvailableChatModels(apiBase, apiKey!);
         } catch (e) {
           toast({
             title: "Failed to load model list!",

@@ -1,6 +1,8 @@
 import { BoxProps } from "@chakra-ui/react";
 import { LabeledPasswordInputWithLink } from "./LabeledInputs";
 
+const url = import.meta.env.VITE_OPENAI_GET_KEY;
+
 export function APIKeyInput({
   apiKey,
   setApiKey,
@@ -15,7 +17,7 @@ export function APIKeyInput({
       label="OpenAI API Key"
       linkLabel="Get a key"
       placeholder="sk-XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
-      link="https://platform.openai.com/account/api-keys"
+      link={url}
       value={apiKey ?? ""}
       setValue={setApiKey}
       {...others}
