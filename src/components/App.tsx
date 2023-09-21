@@ -65,6 +65,7 @@ import { NavigationBar } from "./utils/NavigationBar";
 import { CheckCircleIcon } from "@chakra-ui/icons";
 import { Box, useDisclosure, Spinner, useToast } from "@chakra-ui/react";
 import mixpanel from "mixpanel-browser";
+import { CreateCompletionResponseChoicesInner } from "openai";
 import { OpenAI } from "openai-streams";
 import { Resizable } from "re-resizable";
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -571,7 +572,7 @@ function App() {
               "No choices in response. Decoded response: " + JSON.stringify(decoded)
             );
 
-          const choice = decoded.choices[0];
+          const choice: CreateCompletionResponseChoicesInner = decoded.choices[0];
 
           setNodes((newerNodes) => {
             try {

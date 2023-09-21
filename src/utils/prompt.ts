@@ -1,5 +1,5 @@
 import { FluxNodeData, FluxNodeType, Settings } from "./types";
-import { ChatCompletionRequestMessage } from "openai-streams";
+import { ChatCompletionRequestMessage } from "openai";
 import { MAX_AUTOLABEL_CHARS } from "./constants";
 import { Node } from "reactflow";
 
