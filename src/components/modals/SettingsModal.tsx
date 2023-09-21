@@ -92,7 +92,7 @@ export const SettingsModal = memo(function SettingsModal({
 
           <LabeledSlider
             mt={4}
-            label="Temperature (randomness)"
+            label="Temperature [0-2] (0 is precise, 0.5 is neutral, 1 is creative)"
             value={settings.temp}
             setValue={(v: number) => {
               setSettings({ ...settings, temp: v });
@@ -100,7 +100,7 @@ export const SettingsModal = memo(function SettingsModal({
               if (MIXPANEL_TOKEN) mixpanel.track("Changed temperature");
             }}
             color={getFluxNodeTypeDarkColor(FluxNodeType.User)}
-            max={1.25}
+            max={2}
             min={0}
             step={0.01}
           />
