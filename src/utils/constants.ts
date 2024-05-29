@@ -19,8 +19,8 @@ export const DEFAULT_SETTINGS: Settings = {
   temp: 1,
   n: 3,
   autoZoom: true,
-  model: "gpt-4",
-  defaultPreamble: "You are ChatGPT, a large language model trained by OpenAI. Answer as concisely as possible.",
+  model: "gpt-4o",
+  defaultPreamble: `You are a helpful assistant.`,
 };
 
 export const HOTKEY_CONFIG: Options = {
