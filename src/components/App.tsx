@@ -897,7 +897,9 @@ function App() {
 
         if (!modelList.includes(settings.model)) {
           const oldModel = settings.model;
-          const newModel = modelList.includes(DEFAULT_SETTINGS.model) ? DEFAULT_SETTINGS.model : modelList[0];
+          const newModel = modelList.includes(DEFAULT_SETTINGS.model)
+            ? DEFAULT_SETTINGS.model
+            : modelList[0];
 
           setSettings((settings) => ({ ...settings, model: newModel }));
 
@@ -913,7 +915,7 @@ function App() {
   }, [apiKey]);
 
   const isAnythingSaving = isSavingReactFlow || isSavingSettings;
-  const isAnythingLoading = isAnythingSaving || (availableModels === null);
+  const isAnythingLoading = isAnythingSaving || availableModels === null;
 
   useBeforeunload((event: BeforeUnloadEvent) => {
     // Prevent leaving the page before saving.
@@ -1040,15 +1042,13 @@ function App() {
 
   return (
     <>
-      {!isValidAPIKey(apiKey) && <APIKeyModal apiKey={apiKey} setApiKey={setApiKey} />}
+      {!isValidAPIKey(apiKey) && <APIKeyModal />}
 
       <SettingsModal
         settings={settings}
         setSettings={setSettings}
         isOpen={isSettingsModalOpen}
         onClose={onCloseSettingsModal}
-        apiKey={apiKey}
-        setApiKey={setApiKey}
         availableModels={availableModels}
       />
       <Column

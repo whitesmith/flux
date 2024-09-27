@@ -2,7 +2,7 @@ import { MIXPANEL_TOKEN } from "../../main";
 import { getFluxNodeTypeDarkColor } from "../../utils/color";
 import { DEFAULT_SETTINGS } from "../../utils/constants";
 import { Settings, FluxNodeType } from "../../utils/types";
-import { APIKeyInput } from "../utils/APIKeyInput";
+import { APIKeyInputs } from "../utils/APIKeyInput";
 import { LabeledSelect, LabeledSlider } from "../utils/LabeledInputs";
 
 import {
@@ -24,16 +24,12 @@ export const SettingsModal = memo(function SettingsModal({
   onClose,
   settings,
   setSettings,
-  apiKey,
-  setApiKey,
-  availableModels
+  availableModels,
 }: {
   isOpen: boolean;
   onClose: () => void;
   settings: Settings;
   setSettings: (settings: Settings) => void;
-  apiKey: string | null;
-  setApiKey: (apiKey: string) => void;
   availableModels: string[] | null;
 }) {
   const reset = () => {
@@ -88,7 +84,7 @@ export const SettingsModal = memo(function SettingsModal({
             }}
           />
 
-          <APIKeyInput mt={4} width="100%" apiKey={apiKey} setApiKey={setApiKey} />
+          <APIKeyInputs />
 
           <LabeledSlider
             mt={4}
