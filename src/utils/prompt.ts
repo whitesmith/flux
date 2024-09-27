@@ -1,7 +1,12 @@
 import { FluxNodeData, FluxNodeType, Settings } from "./types";
-import { ChatCompletionRequestMessage } from "openai";
+// import { ChatCompletionRequestMessage } from "openai";
 import { MAX_AUTOLABEL_CHARS } from "./constants";
 import { Node } from "reactflow";
+
+interface ChatCompletionRequestMessage {
+  role: "system" | "user" | "assistant";
+  content: string;
+}
 
 export function messagesFromLineage(
   lineage: Node<FluxNodeData>[],

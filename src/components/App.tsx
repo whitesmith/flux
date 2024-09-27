@@ -1,5 +1,5 @@
 import { MIXPANEL_TOKEN } from "../main";
-import { isValidAPIKey } from "../utils/apikey";
+import { ApiKeyProvider, isValidAPIKey } from "../utils/apikey";
 import { Column, Row } from "../utils/chakra";
 import { copySnippetToClipboard } from "../utils/clipboard";
 import { getFluxNodeTypeColor, getFluxNodeTypeDarkColor } from "../utils/color";
@@ -19,6 +19,8 @@ import {
   UNDEFINED_RESPONSE_STRING,
   STREAM_CANCELED_ERROR_MESSAGE,
   SAVED_CHAT_SIZE_LOCAL_STORAGE_KEY,
+  FLUX_ANTHROPIC_API_KEY,
+  FLUX_GOOGLE_API_KEY,
 } from "../utils/constants";
 import { useDebouncedEffect } from "../utils/debounce";
 import { newFluxEdge, modifyFluxEdge, addFluxEdge } from "../utils/fluxEdge";
@@ -65,7 +67,7 @@ import { NavigationBar } from "./utils/NavigationBar";
 import { CheckCircleIcon } from "@chakra-ui/icons";
 import { Box, useDisclosure, Spinner, useToast } from "@chakra-ui/react";
 import mixpanel from "mixpanel-browser";
-import { CreateCompletionResponseChoicesInner } from "openai";
+// import { CreateCompletionResponseChoicesInner } from "openai";
 import { OpenAI } from "openai-streams";
 import { Resizable } from "re-resizable";
 import { useEffect, useState, useCallback, useRef } from "react";
@@ -87,6 +89,7 @@ import ReactFlow, {
 } from "reactflow";
 import "reactflow/dist/style.css";
 import { yieldStream } from "yield-stream";
+import generateText from "../utils/generateText";
 
 function App() {
   const toast = useToast();
@@ -363,116 +366,48 @@ function App() {
     if (firstCompletionId === undefined) throw new Error("No first completion id!");
 
     (async () => {
-      const stream = await OpenAI(
-        "chat",
-        {
-          model,
-          n: responses,
-          temperature: temp,
-          messages: messagesFromLineage(parentNodeLineage, settings),
-        },
-        { apiKey: apiKey!, mode: "raw", apiBase: apiBase }
+      const provider = Object.keys(availableModels || {}).find((key) =>
+        // @ts-ignore
+        availableModels[key].includes(model)
       );
+      if (!provider) return;
 
-      const DECODER = new TextDecoder();
+      const key = allApiKeys[provider as ApiKeyProvider];
+      if (!key) return;
 
-      const abortController = new AbortController();
+      const messages = messagesFromLineage(parentNodeLineage, settings);
 
-      for await (const chunk of yieldStream(stream, abortController)) {
-        if (abortController.signal.aborted) break;
+      for (let i = 0; i < responses; i++) {
+        const { text } = await generateText({
+          apiKey: key,
+          provider: provider as ApiKeyProvider,
+          model,
+          messages,
+          temperature: temp,
+        });
 
-        try {
-          const decoded = JSON.parse(DECODER.decode(chunk));
+        const correspondingNodeId =
+          overrideExistingIfPossible && i < currentNodeChildren.length
+            ? currentNodeChildren[i].id
+            : newNodes[newNodes.length - responses + i].id;
 
-          if (decoded.choices === undefined)
-            throw new Error(
-              "No choices in response. Decoded response: " + JSON.stringify(decoded)
-            );
-
-          const choice: CreateChatCompletionStreamResponseChoicesInner =
-            decoded.choices[0];
-
-          if (choice.index === undefined)
-            throw new Error(
-              "No index in choice. Decoded choice: " + JSON.stringify(choice)
-            );
-
-          const correspondingNodeId =
-            // If we re-used a node we have to pull it from children array.
-            overrideExistingIfPossible && choice.index < currentNodeChildren.length
-              ? currentNodeChildren[choice.index].id
-              : newNodes[newNodes.length - responses + choice.index].id;
-
-          // The ChatGPT API will start by returning a
-          // choice with only a role delta and no content.
-          if (choice.delta?.content) {
-            setNodes((newerNodes) => {
-              try {
-                return appendTextToFluxNodeAsGPT(newerNodes, {
-                  id: correspondingNodeId,
-                  text: choice.delta?.content ?? UNDEFINED_RESPONSE_STRING,
-                  streamId, // This will cause a throw if the streamId has changed.
-                });
-              } catch (e: any) {
-                // If the stream id does not match,
-                // it is stale and we should abort.
-                abortController.abort(e.message);
-
-                return newerNodes;
-              }
-            });
-          }
-
-          // We cannot return within the loop, and we do
-          // not want to execute the code below, so we break.
-          if (abortController.signal.aborted) break;
-
-          // If the choice has a finish reason, then it's the final
-          // choice and we can mark it as no longer animated right now.
-          if (choice.finish_reason !== null) {
-            // Reset the stream id.
-            setNodes((nodes) =>
-              setFluxNodeStreamId(nodes, { id: correspondingNodeId, streamId: undefined })
-            );
-
-            setEdges((edges) =>
-              modifyFluxEdge(edges, {
-                source: parentNode.id,
-                target: correspondingNodeId,
-                animated: false,
-              })
-            );
-          }
-        } catch (err) {
-          console.error(err);
-        }
-      }
-
-      // If the stream wasn't aborted or was aborted due to a cancelation.
-      if (
-        !abortController.signal.aborted ||
-        abortController.signal.reason === STREAM_CANCELED_ERROR_MESSAGE
-      ) {
-        // Mark all the edges as no longer animated.
-        for (let i = 0; i < responses; i++) {
-          const correspondingNodeId =
-            overrideExistingIfPossible && i < currentNodeChildren.length
-              ? currentNodeChildren[i].id
-              : newNodes[newNodes.length - responses + i].id;
-
-          // Reset the stream id.
-          setNodes((nodes) =>
-            setFluxNodeStreamId(nodes, { id: correspondingNodeId, streamId: undefined })
-          );
-
-          setEdges((edges) =>
-            modifyFluxEdge(edges, {
-              source: parentNode.id,
-              target: correspondingNodeId,
-              animated: false,
-            })
-          );
-        }
+        setNodes((newerNodes) =>
+          appendTextToFluxNodeAsGPT(newerNodes, {
+            id: correspondingNodeId,
+            text: text ?? UNDEFINED_RESPONSE_STRING,
+            streamId,
+          })
+        );
+        setNodes((nodes) =>
+          setFluxNodeStreamId(nodes, { id: correspondingNodeId, streamId: undefined })
+        );
+        setEdges((edges) =>
+          modifyFluxEdge(edges, {
+            source: parentNode.id,
+            target: correspondingNodeId,
+            animated: false,
+          })
+        );
       }
     })().catch((err) =>
       toast({
@@ -572,7 +507,7 @@ function App() {
               "No choices in response. Decoded response: " + JSON.stringify(decoded)
             );
 
-          const choice: CreateCompletionResponseChoicesInner = decoded.choices[0];
+          const choice = decoded.choices[0];
 
           setNodes((newerNodes) => {
             try {
@@ -864,19 +799,43 @@ function App() {
                             API KEY LOGIC
   //////////////////////////////////////////////////////////////*/
 
-  const [apiKey, setApiKey] = useLocalStorage<string>(API_KEY_LOCAL_STORAGE_KEY);
+  const [apiKey] = useLocalStorage<string>(API_KEY_LOCAL_STORAGE_KEY);
+  const [anthropicKey] = useLocalStorage<string>(FLUX_ANTHROPIC_API_KEY);
+  const [googleKey] = useLocalStorage<string>(FLUX_GOOGLE_API_KEY);
+
+  const allApiKeys: Record<ApiKeyProvider, string | null> = {
+    openai: apiKey,
+    anthropic: anthropicKey,
+    google: googleKey,
+  };
+
   const apiBase = import.meta.env.VITE_OPENAI_API_BASE;
 
-  const [availableModels, setAvailableModels] = useState<string[] | null>(null);
+  type AvailableModels = Partial<Record<ApiKeyProvider, string[]>> | null;
+  const [availableModels, setAvailableModels] = useState<AvailableModels>(null);
 
   // modelsLoadCounter lets us discard the results of the requests if a concurrent newer one was made.
   const modelsLoadCounter = useRef(0);
   useEffect(() => {
-    if (isValidAPIKey(apiKey)) {
+    if (isValidAPIKey(anthropicKey, "anthropic")) {
+      const apiModels = import.meta.env.VITE_ANTHROPIC_API_MODELS || "";
+      setAvailableModels((state: AvailableModels) => ({
+        ...state,
+        anthropic: apiModels.split(","),
+      }));
+    }
+
+    if (isValidAPIKey(googleKey, "google")) {
+      const apiModels = import.meta.env.VITE_GOOGLE_API_MODELS || "";
+      setAvailableModels((state: AvailableModels) => ({
+        ...state,
+        google: apiModels.split(","),
+      }));
+    }
+
+    if (isValidAPIKey(apiKey, "openai")) {
       const modelsLoadIndex = modelsLoadCounter.current + 1;
       modelsLoadCounter.current = modelsLoadIndex;
-
-      setAvailableModels(null);
 
       (async () => {
         let modelList: string[] = [];
@@ -893,11 +852,16 @@ function App() {
 
         if (modelList.length === 0) modelList.push(settings.model);
 
-        setAvailableModels(modelList);
+        setAvailableModels((state: AvailableModels) => ({
+          ...state,
+          openai: modelList,
+        }));
 
         if (!modelList.includes(settings.model)) {
           const oldModel = settings.model;
-          const newModel = modelList.includes(DEFAULT_SETTINGS.model) ? DEFAULT_SETTINGS.model : modelList[0];
+          const newModel = modelList.includes(DEFAULT_SETTINGS.model)
+            ? DEFAULT_SETTINGS.model
+            : modelList[0];
 
           setSettings((settings) => ({ ...settings, model: newModel }));
 
@@ -910,10 +874,10 @@ function App() {
         }
       })();
     }
-  }, [apiKey]);
+  }, [apiKey, anthropicKey, googleKey]);
 
   const isAnythingSaving = isSavingReactFlow || isSavingSettings;
-  const isAnythingLoading = isAnythingSaving || (availableModels === null);
+  const isAnythingLoading = isAnythingSaving || availableModels === null;
 
   useBeforeunload((event: BeforeUnloadEvent) => {
     // Prevent leaving the page before saving.
@@ -1040,16 +1004,14 @@ function App() {
 
   return (
     <>
-      {!isValidAPIKey(apiKey) && <APIKeyModal apiKey={apiKey} setApiKey={setApiKey} />}
+      {!isValidAPIKey(apiKey) && <APIKeyModal />}
 
       <SettingsModal
         settings={settings}
         setSettings={setSettings}
         isOpen={isSettingsModalOpen}
         onClose={onCloseSettingsModal}
-        apiKey={apiKey}
-        setApiKey={setApiKey}
-        availableModels={availableModels}
+        availableModels={Object.values(availableModels || {}).flat()}
       />
       <Column
         mainAxisAlignment="center"
