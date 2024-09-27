@@ -1,5 +1,5 @@
 import { MIXPANEL_TOKEN } from "../main";
-import { isValidAPIKey } from "../utils/apikey";
+import { ApiKeyProvider, isValidAPIKey } from "../utils/apikey";
 import { Column, Row } from "../utils/chakra";
 import { copySnippetToClipboard } from "../utils/clipboard";
 import { getFluxNodeTypeColor, getFluxNodeTypeDarkColor } from "../utils/color";
@@ -19,6 +19,8 @@ import {
   UNDEFINED_RESPONSE_STRING,
   STREAM_CANCELED_ERROR_MESSAGE,
   SAVED_CHAT_SIZE_LOCAL_STORAGE_KEY,
+  FLUX_ANTHROPIC_API_KEY,
+  FLUX_GOOGLE_API_KEY,
 } from "../utils/constants";
 import { useDebouncedEffect } from "../utils/debounce";
 import { newFluxEdge, modifyFluxEdge, addFluxEdge } from "../utils/fluxEdge";
@@ -864,19 +866,37 @@ function App() {
                             API KEY LOGIC
   //////////////////////////////////////////////////////////////*/
 
-  const [apiKey, setApiKey] = useLocalStorage<string>(API_KEY_LOCAL_STORAGE_KEY);
+  const [apiKey] = useLocalStorage<string>(API_KEY_LOCAL_STORAGE_KEY);
+  const [anthropicKey] = useLocalStorage<string>(FLUX_ANTHROPIC_API_KEY);
+  const [googleKey] = useLocalStorage<string>(FLUX_GOOGLE_API_KEY);
+
   const apiBase = import.meta.env.VITE_OPENAI_API_BASE;
 
-  const [availableModels, setAvailableModels] = useState<string[] | null>(null);
+  type AvailableModels = Partial<Record<ApiKeyProvider, string[]>> | null;
+  const [availableModels, setAvailableModels] = useState<AvailableModels>(null);
 
   // modelsLoadCounter lets us discard the results of the requests if a concurrent newer one was made.
   const modelsLoadCounter = useRef(0);
   useEffect(() => {
-    if (isValidAPIKey(apiKey)) {
+    if (isValidAPIKey(anthropicKey, "anthropic")) {
+      const apiModels = import.meta.env.VITE_ANTHROPIC_API_MODELS || "";
+      setAvailableModels((state: AvailableModels) => ({
+        ...state,
+        anthropic: apiModels.split(","),
+      }));
+    }
+
+    if (isValidAPIKey(googleKey, "google")) {
+      const apiModels = import.meta.env.VITE_GOOGLE_API_MODELS || "";
+      setAvailableModels((state: AvailableModels) => ({
+        ...state,
+        google: apiModels.split(","),
+      }));
+    }
+
+    if (isValidAPIKey(apiKey, "openai")) {
       const modelsLoadIndex = modelsLoadCounter.current + 1;
       modelsLoadCounter.current = modelsLoadIndex;
-
-      setAvailableModels(null);
 
       (async () => {
         let modelList: string[] = [];
@@ -893,7 +913,10 @@ function App() {
 
         if (modelList.length === 0) modelList.push(settings.model);
 
-        setAvailableModels(modelList);
+        setAvailableModels((state: AvailableModels) => ({
+          ...state,
+          openai: modelList,
+        }));
 
         if (!modelList.includes(settings.model)) {
           const oldModel = settings.model;
@@ -912,7 +935,7 @@ function App() {
         }
       })();
     }
-  }, [apiKey]);
+  }, [apiKey, anthropicKey, googleKey]);
 
   const isAnythingSaving = isSavingReactFlow || isSavingSettings;
   const isAnythingLoading = isAnythingSaving || availableModels === null;
@@ -1049,7 +1072,7 @@ function App() {
         setSettings={setSettings}
         isOpen={isSettingsModalOpen}
         onClose={onCloseSettingsModal}
-        availableModels={availableModels}
+        availableModels={Object.values(availableModels || {}).flat()}
       />
       <Column
         mainAxisAlignment="center"
